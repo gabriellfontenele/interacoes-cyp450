@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Base de dados · Interações CYP450</title>
+  <meta name="description" content="Base de dados do app Interações CYP450: descrição completa de cada fármaco e a estrutura usada nos cruzamentos.">
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+  <script>
+    try { var t = localStorage.getItem("cyp.tema"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <style>
+    main { padding-bottom: var(--space-600); }
+    .back { display: inline-flex; align-items: center; gap: 6px; margin-top: var(--space-200); }
+    .back svg { transform: rotate(90deg); }
+    .db-tools { display: flex; flex-wrap: wrap; gap: var(--space-100); align-items: center; margin: var(--space-100) 0 var(--space-200); }
+    .db-card { margin-top: var(--space-150); }
+    .db-grid { display: grid; gap: var(--space-150); margin-top: var(--space-150); }
+    @media (min-width: 680px) { .db-grid { grid-template-columns: 1fr 1fr; } }
+    .db-col h4 { margin: 0 0 6px; font-size: 13px; line-height: 16px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-soft); }
+    .db-col dl { margin: 0; font-size: 14px; line-height: 20px; }
+    .db-col dt { font-weight: 700; margin-top: 8px; }
+    .db-col dt:first-child { margin-top: 0; }
+    .db-col dd { margin: 2px 0 0; }
+    .review { margin-top: var(--space-150); padding: var(--space-100) var(--space-150); border-radius: var(--radius-md); background: var(--up-bg); border: 1px solid var(--up-line); font-size: 14px; line-height: 20px; }
+    .review b { display: block; font-size: 12px; line-height: 16px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--up); margin-bottom: 2px; }
+    .review ul { margin: 0; padding-left: 18px; }
+    .db-group { margin-top: var(--space-400); }
+  </style>
+</head>
+<body>
+  <header class="appbar">
+    <img class="appbar-mark" src="img/simbolo.png" alt="" width="29" height="40">
+    <div class="appbar-title">
+      <strong>Interações CYP450</strong>
+      <span>Base de dados</span>
+    </div>
+  </header>
+  <main>
+    <a class="link back" href="./#sobre"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>Voltar ao app</a>
+    <div class="view-head">
+      <h1>Base de dados</h1>
+      <p class="lead">Para cada item: a descrição completa e a estrutura que o app usa nos cruzamentos.</p>
+    </div>
+    <div class="db-tools">
+      <div class="segmented" role="group" aria-label="Itens exibidos" id="db-modos" hidden>
+        <button type="button" data-modo="todos" aria-pressed="true">Todos</button>
+        <button type="button" data-modo="revisao" aria-pressed="false">Com pontos de revisão</button>
+      </div>
+      <span class="list-meta" id="db-meta"></span>
+    </div>
+    <div id="db"></div>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script>
+    (function () {
+      var D = window.CYP_DATA;
+      var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
+      var nota = function (t) { return esc(String(t || "").replace(/\s?\[[\d,\s\-–]+\]/g, "")); };
+      // Pontos de revisão só aparecem com ?revisao na URL
+      var revisao = new URLSearchParams(location.search).has("revisao");
+      var via = function (s) { return s.enzima + (s.via ? " (" + s.via + ")" : ""); };
+      var pot = function (x) { return x.enzima + " — " + x.potencia; };
+      var nomeDe = {}; D.farmacos.forEach(function (f) { nomeDe[f.id] = f.nome; });
+      var modo = "todos";
+
+      function card(f) {
+        var o = f.original;
+        var app = "<dl>" +
+          "<dt>Subclasse</dt><dd>" + esc(f.subclasse) + "</dd>" +
+          "<dt>Metabolizado por</dt><dd>" + (f.substrato.length ? esc(f.substrato.map(via).join(", ")) : "—") + (f.outrasVias ? "<br>Outras vias: " + esc(f.outrasVias) : "") + "</dd>" +
+          "<dt>Inibe</dt><dd>" + (f.inibe.length ? esc(f.inibe.map(pot).join("; ")) : "—") + "</dd>" +
+          "<dt>Induz</dt><dd>" + (f.induz.length ? esc(f.induz.map(pot).join("; ")) : "—") + "</dd>" +
+          ((f.alertas || []).length ? "<dt>Alertas ao combinar</dt><dd>" + f.alertas.map(function (a) {
+            return esc(a.texto) + " <em>(" + esc(a.efeito) + " " + esc(a.enzimas.join("/")) + ")</em>";
+          }).join("<br>") + "</dd>" : "") +
+          ((f.citacoes || []).length ? "<dt>Combinações citadas</dt><dd>" + esc(f.citacoes.map(function (c) { return nomeDe[c.alvo]; }).join(", ")) + "</dd>" : "") +
+          (f.aliases ? "<dt>Também encontrado por</dt><dd>" + esc(f.aliases.join(", ")) + "</dd>" : "") +
+        "</dl>";
+        var plan = "<dl>" +
+          "<dt>Metabolizado por</dt><dd>" + esc(o.metabolizado || "—") + "</dd>" +
+          "<dt>Ação na enzima</dt><dd>" + esc(o.acao || "—") + "</dd>" +
+          "<dt>Potência / notas</dt><dd>" + nota(o.notas) + "</dd>" +
+        "</dl>";
+        var rev = revisao ? (f.revisao || []) : [];
+        return '<article class="card db-card">' +
+          '<div class="card-head"><div><h3 class="card-title">' + esc(f.nome) + "</h3>" +
+          (f.exemplos ? '<p class="card-sub">ex.: ' + esc(f.exemplos) + "</p>" : "") + "</div></div>" +
+          '<div class="db-grid"><div class="db-col"><h4>Descrição</h4>' + plan + '</div><div class="db-col"><h4>Usado no cruzamento</h4>' + app + "</div></div>" +
+          (rev.length ? '<div class="review"><b>Ponto de revisão</b><ul>' + rev.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul></div>" : "") +
+        "</article>";
+      }
+
+      function render() {
+        var html = "", n = 0;
+        D.classes.forEach(function (c) {
+          var itens = D.farmacos.filter(function (f) { return f.classe === c.id && (modo === "todos" || (f.revisao || []).length); });
+          if (!itens.length) return;
+          n += itens.length;
+          html += '<section class="db-group"><h2 class="section-title">' + esc(c.nome) + "</h2>" + itens.map(card).join("") + "</section>";
+        });
+        document.getElementById("db").innerHTML = html;
+        document.getElementById("db-meta").textContent = n + (n === 1 ? " item" : " itens") + " · dados de " + D.versao.split("-").reverse().join("/");
+      }
+
+      document.addEventListener("click", function (ev) {
+        var b = ev.target.closest("[data-modo]");
+        if (!b) return;
+        modo = b.dataset.modo;
+        document.querySelectorAll("[data-modo]").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+        render();
+      });
+      if (revisao) document.getElementById("db-modos").hidden = false;
+      render();
+    })();
+  </script>
+</body>
+</html>

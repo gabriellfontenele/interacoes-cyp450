@@ -1,0 +1,11 @@
+# Configuração local do Claude Code
+.claude/
+
+# Planilha de origem (os dados já estão em js/data.js)
+dados_referenciais/
+
+# Pasta de design vazia
+design/
+
+Thumbs.db
+.DS_Store

@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Interações CYP450</title>
+  <meta name="description" content="Interações entre psicofármacos pela inibição e indução das enzimas do CYP450. Dr. Gabriel Fontenele · Psiquiatra.">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0e2c3d" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Interações CYP">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+  <script>
+    // Aplica o tema salvo antes da pintura
+    try { var t = localStorage.getItem("cyp.tema"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="appbar">
+    <img class="appbar-mark" src="img/simbolo.png" alt="" width="29" height="40">
+    <div class="appbar-title">
+      <strong>Interações CYP450</strong>
+      <span>Psicofármacos</span>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <!-- ───── Fármacos ───── -->
+    <section class="view" id="view-farmacos" aria-labelledby="t-farmacos">
+      <div class="view-head">
+        <h1 id="t-farmacos">Fármacos</h1>
+        <p class="lead">Toque para selecionar. Com dois ou mais selecionados, veja as interações.</p>
+      </div>
+
+      <div class="toolbar">
+        <label class="search">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <span class="sr-only">Buscar</span>
+          <input id="busca" type="search" placeholder="Buscar fármaco, classe ou enzima" autocomplete="off" enterkeyhint="search">
+          <button class="search-clear" id="busca-limpar" type="button" aria-label="Limpar busca" hidden>
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </button>
+        </label>
+        <div class="toolbar-row">
+          <div class="segmented" role="group" aria-label="Ordenar lista">
+            <button type="button" data-ordem="az" aria-pressed="true">A–Z</button>
+            <button type="button" data-ordem="classe" aria-pressed="false">Por classe</button>
+          </div>
+          <button type="button" class="btn btn-outline" id="abrir-filtros">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+            Filtros <span class="count-badge" id="filtros-n" hidden>0</span>
+          </button>
+        </div>
+        <div class="active-filters" id="filtros-ativos" aria-live="polite"></div>
+      </div>
+
+      <p class="list-meta" id="lista-meta" aria-live="polite"></p>
+      <div id="lista"></div>
+    </section>
+
+    <!-- ───── Interações ───── -->
+    <section class="view" id="view-interacoes" aria-labelledby="t-interacoes" hidden>
+      <div class="view-head">
+        <h1 id="t-interacoes">Interações</h1>
+      </div>
+      <div id="resultado"></div>
+    </section>
+
+    <!-- ───── Sobre ───── -->
+    <section class="view" id="view-sobre" aria-labelledby="t-sobre" hidden>
+      <div class="view-head">
+        <h1 id="t-sobre">Sobre</h1>
+      </div>
+
+      <div class="brand-plate">
+        <img src="img/logo-horizontal.png" alt="Dr. Gabriel Fontenele, Psiquiatra. CREMEC 16.084 · RQE 17.770" width="1200" height="412">
+      </div>
+
+      <div class="prose">
+        <h2>Como funciona</h2>
+        <p>Para cada par de itens selecionados, o app cruza as enzimas do CYP450 que um fármaco <strong>inibe</strong> ou <strong>induz</strong> com as enzimas que <strong>metabolizam</strong> o outro, segundo as referências listadas abaixo.</p>
+        <ul class="legend">
+          <li><span class="chip chip-inibe">inibe 2D6</span> A enzima é inibida: os níveis dos fármacos metabolizados por ela tendem a <strong>aumentar</strong> (↑).</li>
+          <li><span class="chip chip-induz">induz 3A4</span> A enzima é induzida: os níveis dos fármacos metabolizados por ela tendem a <strong>diminuir</strong> (↓).</li>
+          <li><span class="chip chip-sub">2D6 <i>principal</i></span> Enzima que metaboliza o fármaco. Vias marcadas como <i>menor</i> aparecem com menos destaque.</li>
+        </ul>
+        <p><strong>Interação múltipla</strong> é quando dois ou mais itens atuam sobre o mesmo fármaco: inibindo ou induzindo a mesma enzima (efeito somado), enzimas diferentes ao mesmo tempo, ou em sentidos opostos.</p>
+
+        <h2>Limitações</h2>
+        <ul>
+          <li>Considera apenas interações farmacocinéticas pelo CYP450 descritas nas referências. Interações farmacodinâmicas e por outras vias (como glicuronidação) não são cruzadas.</li>
+          <li>Dois fármacos metabolizados pela mesma enzima, sem que um iniba ou induza essa enzima, não geram alerta.</li>
+          <li>Fármacos que aparecem só nas notas (ex.: lamotrigina, fenobarbital, anticoncepcionais) não são selecionáveis; as notas aparecem no detalhe de cada item.</li>
+          <li>Onde a potência não é informada, o app mostra “potência não especificada”.</li>
+        </ul>
+
+        <h2>Referências</h2>
+        <ol class="refs" id="sobre-refs"></ol>
+        <p id="sobre-fonte"></p>
+        <p><a class="link" href="dados.html">Ver a base de dados completa</a></p>
+
+        <h2>Aparência</h2>
+        <div class="segmented segmented-wide" role="group" aria-label="Tema">
+          <button type="button" data-tema="auto" aria-pressed="true">Automático</button>
+          <button type="button" data-tema="light" aria-pressed="false">Claro</button>
+          <button type="button" data-tema="dark" aria-pressed="false">Escuro</button>
+        </div>
+
+        <h2>Instalar no celular</h2>
+        <p id="instalar-texto">No Android (Chrome), abra o menu ⋮ e toque em <strong>Instalar app</strong>. No iPhone (Safari), toque em Compartilhar e depois em <strong>Adicionar à Tela de Início</strong>. Depois de instalado, o app funciona sem internet.</p>
+        <button type="button" class="btn btn-primary" id="instalar" hidden>Instalar app</button>
+
+        <div class="disclaimer" role="note">
+          <strong>Aviso.</strong> Ferramenta de apoio à decisão clínica, baseada nas referências listadas acima. Não substitui o julgamento clínico, a bula nem fontes atualizadas.
+        </div>
+        <p class="signature">Dr. Gabriel Fontenele · Psiquiatra<br><span class="label-caps">CREMEC 16.084 · RQE 17.770</span></p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bandeja de seleção -->
+  <div class="tray" id="bandeja" hidden>
+    <div class="tray-inner">
+      <div class="tray-text">
+        <strong id="bandeja-n">0 selecionados</strong>
+        <span id="bandeja-resumo"></span>
+      </div>
+      <button type="button" class="btn btn-primary" id="bandeja-ver">Ver interações</button>
+    </div>
+  </div>
+
+  <!-- Navegação inferior -->
+  <nav class="tabbar" aria-label="Seções">
+    <button type="button" data-view="farmacos" aria-current="page">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="8" rx="4" transform="rotate(-45 12 12)"/><path d="m9.2 9.2 5.6 5.6"/></svg>
+      <span>Fármacos</span>
+    </button>
+    <button type="button" data-view="interacoes">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="8" cy="12" r="5"/><circle cx="16" cy="12" r="5"/></svg>
+      <span>Interações</span>
+      <span class="tab-badge" id="tab-badge" hidden>0</span>
+    </button>
+    <button type="button" data-view="sobre">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg>
+      <span>Sobre</span>
+    </button>
+  </nav>
+
+  <!-- Filtros -->
+  <dialog class="sheet" id="sheet-filtros" aria-labelledby="t-filtros">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <div class="sheet-head">
+      <h2 id="t-filtros">Filtros</h2>
+      <button type="button" class="icon-btn" data-fechar aria-label="Fechar filtros">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body" id="filtros-corpo"></div>
+    <div class="sheet-foot">
+      <button type="button" class="btn btn-ghost" id="filtros-limpar">Limpar</button>
+      <button type="button" class="btn btn-primary" id="filtros-aplicar" data-fechar>Ver resultados</button>
+    </div>
+  </dialog>
+
+  <!-- Detalhe do fármaco -->
+  <dialog class="sheet" id="sheet-detalhe" aria-labelledby="t-detalhe">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <div class="sheet-head">
+      <h2 id="t-detalhe"></h2>
+      <button type="button" class="icon-btn" data-fechar aria-label="Fechar detalhes">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body" id="detalhe-corpo"></div>
+    <div class="sheet-foot">
+      <button type="button" class="btn btn-primary btn-block" id="detalhe-selecionar"></button>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
